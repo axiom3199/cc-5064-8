@@ -1,0 +1,267 @@
+{
+ "schema_version": 1,
+ "case": "spike_penetrate",
+ "level": "base",
+ "provenance": {
+  "source": "voxelizer/cases.py",
+  "builder": "scripts/rebuild_samples.py",
+  "generator": "voxelizer.voxelizer.Voxelizer.voxelize",
+  "reference": "voxelizer.geometry.tri_box_overlap (SAT 闭集)",
+  "params": {
+   "tip": [
+    6.3,
+    6.3,
+    6.3
+   ],
+   "base_z": 2.1,
+   "base_radius": 0.4,
+   "shape": "solid_needle"
+  }
+ },
+ "scale": {
+  "level": "base",
+  "cell": 1.0,
+  "n": [
+   12,
+   12,
+   12
+  ],
+  "origin": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "level_index": 0
+ },
+ "grid": {
+  "origin": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "cell": 1.0,
+  "n": [
+   12,
+   12,
+   12
+  ]
+ },
+ "contact": {
+  "declared": "penetrate",
+  "observed": "penetrate",
+  "evidence": {
+   "contact": "penetrate",
+   "straddle_pixels": 2,
+   "touch_pixels": 0,
+   "hover_voxels": 0,
+   "boundary_points": 0,
+   "degenerate": false,
+   "observed": "penetrate"
+  }
+ },
+ "projection_axes": {
+  "0": 1,
+  "1": 0,
+  "2": 0,
+  "3": 2
+ },
+ "triangles": [
+  [
+   [
+    6.3,
+    6.3,
+    6.3
+   ],
+   [
+    5.9,
+    6.1,
+    2.1
+   ],
+   [
+    6.7,
+    6.1,
+    2.1
+   ]
+  ],
+  [
+   [
+    6.3,
+    6.3,
+    6.3
+   ],
+   [
+    6.7,
+    6.1,
+    2.1
+   ],
+   [
+    6.3,
+    6.7,
+    2.1
+   ]
+  ],
+  [
+   [
+    6.3,
+    6.3,
+    6.3
+   ],
+   [
+    6.3,
+    6.7,
+    2.1
+   ],
+   [
+    5.9,
+    6.1,
+    2.1
+   ]
+  ],
+  [
+   [
+    5.9,
+    6.1,
+    2.1
+   ],
+   [
+    6.3,
+    6.7,
+    2.1
+   ],
+   [
+    6.7,
+    6.1,
+    2.1
+   ]
+  ]
+ ],
+ "occupancy": {
+  "must": [
+   [
+    5,
+    6,
+    2
+   ],
+   [
+    5,
+    6,
+    3
+   ],
+   [
+    6,
+    6,
+    2
+   ],
+   [
+    6,
+    6,
+    3
+   ],
+   [
+    6,
+    6,
+    4
+   ],
+   [
+    6,
+    6,
+    5
+   ],
+   [
+    6,
+    6,
+    6
+   ]
+  ],
+  "may": [
+   [
+    5,
+    6,
+    2
+   ],
+   [
+    5,
+    6,
+    3
+   ],
+   [
+    6,
+    6,
+    2
+   ],
+   [
+    6,
+    6,
+    3
+   ],
+   [
+    6,
+    6,
+    4
+   ],
+   [
+    6,
+    6,
+    5
+   ],
+   [
+    6,
+    6,
+    6
+   ]
+  ],
+  "may_only": [],
+  "degenerate_triangles": []
+ },
+ "reference_intersection": {
+  "voxels": [
+   [
+    5,
+    6,
+    2
+   ],
+   [
+    5,
+    6,
+    3
+   ],
+   [
+    6,
+    6,
+    2
+   ],
+   [
+    6,
+    6,
+    3
+   ],
+   [
+    6,
+    6,
+    4
+   ],
+   [
+    6,
+    6,
+    5
+   ],
+   [
+    6,
+    6,
+    6
+   ]
+  ],
+  "count": 7
+ },
+ "verification": {
+  "missed": [],
+  "extra": [],
+  "reference_count": 7
+ },
+ "stats": {
+  "must": 7,
+  "may": 7,
+  "may_only": 0,
+  "degenerate": 0
+ }
+}

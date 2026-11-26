@@ -30,10 +30,59 @@ python3 server.py [--port 8000]
 python3 cli.py voxelize --scene duct_strip --out voxels.json   # 生成体素数据
 python3 cli.py connectivity --scene duct_paper --budget 2      # 连通测量+细网格复验
 python3 cli.py verify --scene tetra --scale 0.1                # 漏标/多标对照
+python3 cli.py bounds                                          # 三级网格接触上下界研究
+python3 cli.py samples --check                                 # 校验入库体素样本未被手改
 python3 cli.py --help
 ```
 
-命令行只是辅助入口；交互检查请用上面的图形界面。
+命令行只是辅助入口；交互检查请用上面的图形界面。新几何案例在界面的
+"场景"下拉中直接可选，**生成体素**按钮调用的是同一套体素覆盖实现，
+拖拽光栅视窗即可平移几何并重新运算，保守覆盖与空间格均非固定数据。
+
+## 退化几何素材包（薄片 / 斜面 / 尖角 / 轴向退化）
+
+`voxelizer/cases.py` 提供 10 个自制几何案例，每个都带**已知接触类型**、
+来源与重建参数；尺度跨越三级网格（base h=1 / mid h=0.5 / fine h=0.25，
+12→24→48 层），案例几何尺度不变，因此擦边接触在每一级都落在整数格界上。
+
+| key | 族 | 接触类型 | 说明 |
+|---|---|---|---|
+| `sheet_graze` | 薄片 | 擦边 | 零厚度薄片恰好贴格平面 z=7，闭集双归属 |
+| `sheet_penetrate` | 薄片 | 穿入 | 倾斜薄片深度跨格平面，像素深度区间严格跨层 |
+| `eps_hover` | 薄片 | 留缝 | 间隙 4e-10 小于外扩容差，只产生 may_only |
+| `wafer_graze` | 极薄面 | 擦边 | 厚度 1e-3 薄盒跨格界，三级网格厚度均远小于格宽 |
+| `incline_graze` | 斜面 | 擦边 | 45° 斜面只在格点 (2,2,4) 接触 |
+| `incline_penetrate` | 斜面 | 穿入 | 45° 斜面连续穿过多个格平面 |
+| `spike_graze` | 尖角 | 擦边 | 轴向细针针尖顶格点（退化回退） |
+| `spike_penetrate` | 尖角 | 穿入 | 实体细针针尖入层、棱线跨格平面 |
+| `axis_degenerate` | 轴向退化 | 擦边 | 共线三角形，段端点/中点在格点，走解析回退 |
+| `axis_dup_point` | 轴向退化 | 擦边 | 重合点三角形退化为沿 x 轴线段 |
+
+**擦边与穿入用真实体素输出区分**：穿入像素的深度区间严格跨越格界
+（straddle 证据），擦边只有区间端点贴界（touch 证据）；留缝则表现为
+解析参考否证的 may_only 体素（hover 证据）。证据提取与三级网格的
+独立细分上下界研究在 `voxelizer/bounds.py`，结论分两档：
+
+- `valid`：穿入在三级网格都观察到跨层证据、多标随细分单调不增；
+  擦边的闭集双归属在细分下稳定（双归属是接触语义，不是伪占用）。
+- `limited`：留缝间隙小于某级网格的绝对外扩容差时，细分前无法分离
+  真接触与留缝，只能给保守上界；细到容差相对格宽可忽略后伪占用消失。
+
+## 入库体素几何样本（真实体素输出，禁止手填占用）
+
+```bash
+python3 scripts/rebuild_samples.py           # 重建 30 个样本（10 案例 × 3 级网格）
+python3 scripts/rebuild_samples.py --check   # 防篡改/防漂移校验（测试也会跑）
+```
+
+- 样本位于 `samples/voxels/<case>__<level>.json`，清单与 sha256 指纹在
+  `samples/manifest.json`，供体素覆盖直接加载。
+- 每个样本保存**尺度**（level/cell/n/origin）、每个源面的**投影轴**、
+  独立 SAT 解析的**参考相交体素**、漏覆盖（必须为空）、多余体素
+  （恰为 may_only）、接触证据与来源参数（provenance）。
+- 占用格只能由 `Voxelizer.voxelize` 实际执行得到；`--check` 会用当前
+  体素化器重新运算并逐项比对，手填或篡改任何占用格都会被测试抓出。
+
 
 ## 核心规则（全库统一）
 
@@ -86,6 +135,7 @@ python3 cli.py --help
 | `eps_graze` | 贴格界薄片（演示保守伪占用 may_only） |
 | `grid_point_tri` | 穿过格点的三角形（边界归属规则） |
 | `tetra` / `cube` | 可缩放模型（`--scale 0.1/1/10` 核对漏标/多标） |
+| `sheet_*` / `wafer_*` / `incline_*` / `spike_*` / `axis_*` | 退化几何素材包案例（见下节） |
 
 ## 测试
 
@@ -103,9 +153,16 @@ voxelizer/
   conservative.py  保守光栅化：投影、像素覆盖、深度区间
   voxelizer.py     表面体素化器：must/may 分类、源面表、参考对照
   connectivity.py  空腔连通测量：洪泛、细分预算、未决、细网格复验
-  scenes.py        演示/测试场景
+  scenes.py        演示/测试场景（含退化几何案例适配）
+  cases.py         自制退化几何素材包：薄片/斜面/尖角/轴向退化 + 三级网格
+  bounds.py        接触证据（擦边/穿入/留缝）与独立细分上下界研究
 cli.py             命令行（仅辅助）
 server.py          图形入口（HTTP + 静态页）
+scripts/
+  rebuild_samples.py  体素样本重建/防篡改校验（真实体素化，禁止手填）
+samples/
+  manifest.json    样本清单与 sha256 指纹
+  voxels/          30 个可直接加载的真实体素样本（10 案例 × 3 级网格）
 web/               界面（光栅调试视窗 + 体素视图 + 结果区）
 tests/             unittest 与客户端冒烟
 ```

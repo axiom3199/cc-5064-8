@@ -105,6 +105,29 @@ async function main() {
               "may_only:", state.data.stats.may_only);
   if (state.data.stats.may < 1) throw new Error("细三角被遗漏");
 
+  // 退化几何素材包案例：界面按钮走真实体素覆盖，不用固定数据冒充
+  const before = ctx2dCalls.fillRect;
+  for (const [scene, kind] of [["sheet_graze", "raster"],
+                               ["incline_penetrate", "raster"],
+                               ["axis_degenerate", "fallback"],
+                               ["eps_hover", "raster"]]) {
+    state.scene = scene;
+    await regenerate();
+    const d = state.data;
+    if (d.verification.missed.length) throw new Error(`${scene} 存在漏标`);
+    if (!d.must.length && !d.may.length) throw new Error(`${scene} 无占用`);
+    const r0 = d.raster[0];
+    if (kind === "raster" && (!r0.pixels || !r0.pixels.length))
+      throw new Error(`${scene} 光栅视窗缺少真实覆盖像素`);
+    if (kind === "fallback" && (!r0.degenerate || !r0.cells.length))
+      throw new Error(`${scene} 退化回退数据缺失`);
+    console.log(scene, "must:", d.stats.must, "may_only:", d.stats.may_only,
+                kind === "raster" ? `pixels:${r0.pixels.length}`
+                                  : `cells:${r0.cells.length}`);
+  }
+  if (ctx2dCalls.fillRect <= before)
+    throw new Error("新案例未在光栅调试视窗绘制保守覆盖与空间格");
+
   // 连通测量（封孔纸）
   state.scene = "duct_paper";
   await regenerate();

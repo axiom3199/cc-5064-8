@@ -7,9 +7,15 @@
 - duct_paper：纸精确裁成缝隙形状，封死孔道；
 二者在粗层得到相同的一圈候选格，连通测量必须细分才能区分。
 - duct_open：无遮挡对照组。
+
+退化几何案例（cases.py，key 同名转场景）：薄片/斜面/尖角/轴向退化，
+尺度跨越三级网格、带已知接触类型（擦边/穿入/留缝），可在光栅调试视窗
+拖拽平移并由服务器实际重新体素化。
 """
 from dataclasses import dataclass, replace
 
+from .cases import _BUILDERS as _CASE_BUILDERS
+from .cases import grid_for_level
 from .grid import Grid
 
 DUCT_Z = 6.13
@@ -164,6 +170,13 @@ def scene_cube(scale=1.0):
                  scalable=True)
 
 
+def _case_scene(key):
+    """把 cases.py 的退化几何案例适配成可在图形入口加载的场景。"""
+    case = _CASE_BUILDERS[key]()
+    return Scene(case.key, case.name, case.description,
+                 list(case.triangles), grid_for_level("base"), None)
+
+
 _BUILDERS = {
     "duct_strip": scene_duct_strip,
     "duct_paper": scene_duct_paper,
@@ -174,6 +187,9 @@ _BUILDERS = {
     "tetra": scene_tetra,
     "cube": scene_cube,
 }
+# 退化几何案例（薄片/斜面/尖角/轴向退化）同名接入，图形入口与命令行共用
+for _case_key in _CASE_BUILDERS:
+    _BUILDERS[_case_key] = (lambda k=_case_key: _case_scene(k))
 
 
 def list_scenes():

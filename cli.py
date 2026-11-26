@@ -7,10 +7,18 @@
 import argparse
 import json
 import sys
+from dataclasses import asdict
+from pathlib import Path
 
-from voxelizer import scenes
-from voxelizer.connectivity import fine_verdict, measure_connectivity
-from voxelizer.voxelizer import Voxelizer
+ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import rebuild_samples  # noqa: E402
+from voxelizer import scenes  # noqa: E402
+from voxelizer.bounds import run_study  # noqa: E402
+from voxelizer.connectivity import fine_verdict, measure_connectivity  # noqa: E402
+from voxelizer.voxelizer import Voxelizer  # noqa: E402
 
 NOTE = ("表面占用（surface occupancy）：仅表示三角形表面穿过哪些体素，"
         "不代表已获得内部实心体积；本工具不做内部填充。")
@@ -105,6 +113,27 @@ def cmd_verify(args):
     return 0 if not ver.missed else 1
 
 
+def cmd_samples(args):
+    if args.check:
+        problems = rebuild_samples.check()
+        if problems:
+            for p in problems:
+                print(f"FAIL: {p}", file=sys.stderr)
+            return 1
+        print("OK: 入库体素样本与当前体素化器输出一致")
+        return 0
+    manifest = rebuild_samples.rebuild()
+    print(f"重建 {manifest['count']} 个真实体素样本（{len(manifest['levels'])} 级网格）")
+    return 0
+
+
+def cmd_bounds(args):
+    studies = run_study()
+    out = [asdict(s) for s in studies]
+    print(json.dumps(out, ensure_ascii=False, indent=1))
+    return 0 if all(s.applicability != "review" for s in studies) else 1
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(
         description="保守光栅化表面体素化（命令行仅辅助体素覆盖；"
@@ -131,6 +160,14 @@ def main(argv=None):
     f.add_argument("--res", type=int, default=None)
     f.add_argument("--scale", type=float, default=None)
     f.set_defaults(fn=cmd_verify)
+
+    sm = sub.add_parser("samples", help="重建/校验入库体素几何样本（辅助）")
+    sm.add_argument("--check", action="store_true",
+                    help="只校验入库样本与当前体素化器输出，不写文件")
+    sm.set_defaults(fn=cmd_samples)
+
+    bd = sub.add_parser("bounds", help="三级网格独立细分的接触上下界研究")
+    bd.set_defaults(fn=cmd_bounds)
 
     args = p.parse_args(argv)
     try:
