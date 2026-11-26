@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>保守光栅化表面体素化器</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1>保守光栅化表面体素化器</h1>
+  <span class="note">输出为表面占用（surface occupancy），非内部实心体积；本工具不做内部填充。</span>
+</header>
+
+<div id="error-banner" hidden></div>
+
+<div class="toolbar">
+  <label>场景 <select id="scene"></select></label>
+  <label>分辨率 <input id="res" type="number" min="4" max="48" value="12"></label>
+  <label>缩放 <input id="scale" type="number" step="0.1" min="0.01" value="1" title="仅四面体/立方体"></label>
+  <label>平移
+    <input id="dx" type="number" step="0.5" value="0" title="dx">
+    <input id="dy" type="number" step="0.5" value="0" title="dy">
+    <input id="dz" type="number" step="0.5" value="0" title="dz">
+  </label>
+  <button id="regen">生成体素</button>
+  <button id="download">下载体素数据</button>
+  <span id="scene-desc" class="dim"></span>
+</div>
+
+<main>
+  <section class="panel">
+    <h3>光栅调试视窗（投影平面，可拖拽平移几何）</h3>
+    <canvas id="raster" width="540" height="540"></canvas>
+    <div class="row">
+      <label>源面 <select id="tri-select"></select></label>
+      <span id="raster-info" class="dim">—</span>
+    </div>
+    <div class="legend">
+      <span class="sw must"></span>必交像素
+      <span class="sw mayonly"></span>可能交（保守伪占用）
+      <span class="sw center"></span>像素中心命中
+      <span class="sw tri"></span>三角形投影
+    </div>
+  </section>
+
+  <section class="panel">
+    <h3>体素视图（保守覆盖 + 空间格）</h3>
+    <canvas id="voxels" width="560" height="540"></canvas>
+    <div class="row">
+      <label>层切片 k ≤ <input id="layer" type="range" min="0" value="0" style="width:140px"> <span id="layer-val"></span></label>
+    </div>
+    <div class="legend">
+      <span class="sw must"></span>必交体素
+      <span class="sw mayonly"></span>可能交体素
+      <span class="sw hl"></span>选中源面/体素
+      <span class="sw path"></span>通路
+    </div>
+  </section>
+
+  <aside class="panel side">
+    <h3>结果区</h3>
+    <div id="stats" class="kv"></div>
+    <h4>空腔连通测量</h4>
+    <div class="row">
+      <label>细分预算 <input id="budget" type="number" min="0" max="3" value="2"></label>
+      <button id="measure">测量连通</button>
+    </div>
+    <div id="conn-result" class="kv dim">（仅孔道场景可用）</div>
+    <h4>源面（点击高亮其体素）</h4>
+    <div id="faces" class="list"></div>
+    <h4>体素（实际占用，点击看源面）</h4>
+    <div id="voxel-list" class="list"></div>
+  </aside>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>
